@@ -1,0 +1,42 @@
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.cache/
+.dmypy.json
+.ipynb_checkpoints/
+
+# Virtual environments (keep envs/ with YAMLs)
+.venv/
+venv/
+ENV/
+env/
+
+# Nextflow runtime
+work/
+.nextflow*
+trace.txt
+timeline.html
+report.html
+dag.*
+*.dot
+
+# Pipeline outputs
+outputs/
+results/
+logs/
+
+# Misc
+nohup.out

@@ -1,0 +1,2 @@
+sample_id,dapi_path,mask_path,seg_path,reads_unmasked_path,reads_masked_path
+E14.5_2,test_data/dapi/DAPI_E14.5_2.tif,test_data/masks/DAPI_E14.5_2_mask.tif,test_data/cellpose/DAPI_E14.5_2_seg.npy,test_data/unmasked_reads/E14.5_2_unmasked_HighThreshold.csv,test_data/masked_reads/E14.5_2_masked.csv

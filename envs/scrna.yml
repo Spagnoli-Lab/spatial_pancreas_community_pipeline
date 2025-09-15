@@ -1,0 +1,11 @@
+name: scrna-env
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.10
+  - pandas
+  - scanpy
+  - anndata
+

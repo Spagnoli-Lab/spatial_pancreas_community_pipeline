@@ -1,0 +1,21 @@
+name: spatial-nf
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - openjdk=17
+  - nextflow
+  - python=3.10
+  - pip
+  # For scripts/cell_segmentation_filter.py
+  - numpy
+  - pillow
+  - scipy
+  - matplotlib
+  - scikit-image
+  # For scripts/process_scdata.py
+  - pandas
+  - scanpy
+  - anndata
+
