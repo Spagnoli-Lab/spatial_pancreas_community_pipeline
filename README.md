@@ -26,7 +26,7 @@ All other dependencies are installed automatically during the Nextflow run via t
 
 Execute the pipeline using the bundled test data:
 ```bash
-nextflow run main.nf -profile test
+nextflow run main.nf -profile test -with-dag flowchart.png -with-timeline timeline.html
 ```
 
 Key outputs are written under `outputs/nf/`:
@@ -35,6 +35,7 @@ Key outputs are written under `outputs/nf/`:
 - `pciseq/` – pciSeq results and Tangram inputs.
 - `tangram/` – Tangram spatial AnnData, projected genes, mapping.
 - `tangram/post/` – postprocessing plots and cell-type counts.
+- See `docs/workflow_diagram.md` for a Mermaid diagram of the pipeline stages.
 
 ## Directory Structure
 
