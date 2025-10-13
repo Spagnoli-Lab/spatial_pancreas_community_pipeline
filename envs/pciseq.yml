@@ -10,6 +10,10 @@ dependencies:
   - scipy
   - scanpy
   - anndata
+  - matplotlib
+  - seaborn
+  - squidpy
   - pip
   - pip:
       - pciSeq
+      - tangram-sc==1.0.2
