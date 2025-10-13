@@ -1,6 +1,6 @@
 # Spatial Pipeline Overview
 
-This repository contains a Nextflow-driven workflow that takes raw spatial transcriptomics mask outputs and masked read coordinates, filters the segmentation, overlays QC plots, runs pciSeq to assign cell types, projects single-cell gene signatures with Tangram, and produces post-Tangram quality reports. The end-to-end run generates:
+This repository wraps the workflow from [Spagnoli-Lab/spatial-pancreas-communities](https://github.com/Spagnoli-Lab/spatial-pancreas-communities) into a reproducible Nextflow pipeline. It takes raw spatial transcriptomics mask outputs and masked read coordinates, filters the segmentation, overlays QC plots, runs pciSeq to assign cell types, projects single-cell gene signatures with Tangram, and produces post-Tangram quality reports. The end-to-end run generates:
 
 - Filtered segmentation masks and overlays for visual QC.
 - pciSeq classification artifacts (pickled results and AnnData ready for downstream tools).
