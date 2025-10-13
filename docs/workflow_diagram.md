@@ -2,20 +2,21 @@
 
 ```mermaid
 flowchart TD
-    A[samplesheet.csv] --> B[Normalize sample rows<br/>(channel enrichment)]
-    B --> C[FILTER_CELLS_BY_TISSUE<br/>cell_segmentation_filter.py]
-    C -->|processed mask + viz + masked reads path| D[RUN_PCISEQ<br/>run_pciseq_fit.py]
-    D -->|filtered tuple| E[OVERLAY_MASKED_READS<br/>overlay_masked_reads.py]
-    E -->|"QC overlays"<br/>overlay_png_summary]
+    A[samplesheet.csv] --> B["Normalize sample rows\n(channel enrichment)"]
+    B --> C["FILTER_CELLS_BY_TISSUE\ncell_segmentation_filter.py"]
+    C -->|processed mask + viz + masked reads path| D["RUN_PCISEQ\nrun_pciseq_fit.py"]
+    D -->|filtered tuple| E["OVERLAY_MASKED_READS\noverlay_masked_reads.py"]
+    E -->|"QC overlays\noverlay_png_summary"| E_out[Overlays]
 
-    D -->|pciSeq result pickle| F[PCISEQ_TO_TANGRAM_INPUT<br/>pciseq_to_anndata.py]
-    F -->|pciSeq AnnData| G[RUN_TANGRAM<br/>run_tangram.py]
-    G -->|spatial AnnData + projected genes + map| H[TANGRAM_PLOT<br/>tangram_postprocess.py]
+    D -->|pciSeq result pickle| F["PCISEQ_TO_TANGRAM_INPUT\npciseq_to_anndata.py"]
+    F -->|pciSeq AnnData| G["RUN_TANGRAM\nrun_tangram.py"]
+    G -->|spatial AnnData + projected genes + map| H["TANGRAM_PLOT\ntangram_postprocess.py"]
 
     classDef data fill:#f3f4ff,stroke:#555,color:#222;
     classDef process fill:#e0f7f4,stroke:#20706f,color:#0f3d39;
     class A data;
     class B,C,D,E,F,G,H process;
+    class E_out data;
 ```
 
 **Legend**
