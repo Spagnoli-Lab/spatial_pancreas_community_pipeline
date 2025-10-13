@@ -66,7 +66,7 @@ process RUN_PCISEQ {
 
   output:
   tuple val(sample_id), path(mask_npz), path(mask_viz), path(masked_reads)
-  path "${sample_id}_pciseq_result.pkl"
+  tuple val(sample_id), path("${sample_id}_pciseq_result.pkl")
 
   script:
   """
@@ -77,6 +77,73 @@ process RUN_PCISEQ {
     --sc_h5ad ${sc_reference} \\
     --cluster_key active.ident \\
     --collapse_immune \\
+    --output_dir .
+  """
+}
+
+process PCISEQ_TO_TANGRAM_INPUT {
+  tag { sample_id }
+  publishDir "${params.outdir}/pciseq", mode: 'copy'
+  conda "${projectDir}/envs/pciseq.yml"
+
+  input:
+  tuple val(sample_id), path(pciseq_pickle)
+
+  output:
+  tuple val(sample_id), path("${sample_id}_pciseq_predicted.h5ad")
+
+  script:
+  """
+  python ${projectDir}/scripts/pciseq_to_anndata.py \\
+    --sample ${sample_id} \\
+    --pciseq_result ${pciseq_pickle} \\
+    --output_dir .
+  """
+}
+
+process RUN_TANGRAM {
+  tag { sample_id }
+  publishDir "${params.outdir}/tangram", mode: 'copy'
+  conda "${projectDir}/envs/pciseq.yml"
+
+  input:
+  tuple val(sample_id), path(pciseq_anndata), path(sc_reference)
+
+  output:
+  tuple val(sample_id),
+        path("${sample_id}_tangram_predicted.h5ad"),
+        path("${sample_id}_projected.h5ad"),
+        path("${sample_id}_tangram_map.h5ad")
+
+  script:
+  """
+  python ${projectDir}/scripts/run_tangram.py \\
+    --sample ${sample_id} \\
+    --sc_reference "${sc_reference}" \\
+    --pciseq_anndata "${pciseq_anndata}" \\
+    --output_dir .
+  """
+}
+
+process TANGRAM_PLOT {
+  tag { sample_id }
+  publishDir "${params.outdir}/tangram/post", mode: 'copy'
+  conda "${projectDir}/envs/pciseq.yml"
+
+  input:
+  tuple val(sample_id), path(spatial_adata), path(projected_h5ad), path(tangram_map), path(sc_reference)
+
+  output:
+  path "${sample_id}_tangram_training_scores.png"
+  path "${sample_id}_tangram_scatter.png"
+  path "${sample_id}_tangram_celltype_counts.txt"
+
+  script:
+  """
+  python ${projectDir}/scripts/tangram_postprocess.py \\
+    --sample ${sample_id} \\
+    --spatial_adata "${spatial_adata}" \\
+    --tangram_map "${tangram_map}" \\
     --output_dir .
   """
 }
@@ -135,6 +202,21 @@ workflow {
 
   RUN_PCISEQ.out[0]                                                     // Pass-through tuple for overlay generation
     | OVERLAY_MASKED_READS
+
+  RUN_PCISEQ.out[1]                                                     // Convert pciSeq results into AnnData
+    | PCISEQ_TO_TANGRAM_INPUT
+
+  PCISEQ_TO_TANGRAM_INPUT.out                                           // Run Tangram using single-cell reference
+    .map { sample_id, pciseq_anndata ->
+      tuple(sample_id, pciseq_anndata, file(params.sc_h5ad))
+    }
+    | RUN_TANGRAM
+
+RUN_TANGRAM.out                                                       // Create Tangram visualization
+    .map { sample_id, tangram_h5ad, projected_h5ad, tangram_map ->
+      tuple(sample_id, tangram_h5ad, projected_h5ad, tangram_map, file(params.sc_h5ad))
+    }
+    | TANGRAM_PLOT
 
   // Channel.value(1) | PROCESS_SCRNA                                   // Downstream scRNA step (currently disabled)
 }

@@ -40,3 +40,10 @@ logs/
 
 # Misc
 nohup.out
+
+# Large test data (keep repo lean)
+test_data/
+
+# Notebooks (ignore large local notebooks)
+SegmentatioNotebook.ipynb
+notebook/
