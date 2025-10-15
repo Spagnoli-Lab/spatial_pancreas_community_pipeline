@@ -4,9 +4,20 @@ params.samplesheet = params.samplesheet ?: "${projectDir}/samplesheet.csv"
 params.outdir      = params.outdir      ?: "${projectDir}/outputs/nf"
 params.sc_h5ad     = params.sc_h5ad     ?: "${projectDir}/test_data/single_cell/Cartana_simplified_fixname.h5ad"
 
+def sampleSubdir(String sampleId) {
+  if (!sampleId) {
+    return "unknown_sample"
+  }
+  def parts = sampleId.tokenize('_')
+  if (parts.size() >= 2) {
+    return "${parts[0]}/${parts[-1]}"
+  }
+  return sampleId
+}
+
 process FILTER_CELLS_BY_TISSUE {
   tag { sample_id }
-  publishDir "${params.outdir}/cell_filter", mode: 'copy'
+  publishDir { "${params.outdir}/${sampleSubdir(sample_id)}/cell_filter" }, mode: 'copy'
   conda "${projectDir}/envs/filter.yml"
 
   input:
@@ -30,7 +41,7 @@ process FILTER_CELLS_BY_TISSUE {
 
 process OVERLAY_MASKED_READS {
   tag { sample_id }
-  publishDir "${params.outdir}/overlay_qc", mode: 'copy'
+  publishDir { "${params.outdir}/${sampleSubdir(sample_id)}/overlay_qc" }, mode: 'copy'
   conda "${projectDir}/envs/overlay.yml"
 
   input:
@@ -58,7 +69,10 @@ process OVERLAY_MASKED_READS {
 
 process RUN_PCISEQ {
   tag { sample_id }
-  publishDir "${params.outdir}/pciseq", mode: 'copy'
+  publishDir { "${params.outdir}/${sampleSubdir(sample_id)}/pciseq" }, mode: 'copy', saveAs: { filename ->
+    def name = filename.toString()
+    name.endsWith('_cell_masks.tif') ? null : filename
+  }
   conda "${projectDir}/envs/pciseq.yml"
 
   input:
@@ -83,7 +97,7 @@ process RUN_PCISEQ {
 
 process PCISEQ_TO_TANGRAM_INPUT {
   tag { sample_id }
-  publishDir "${params.outdir}/pciseq", mode: 'copy'
+  publishDir { "${params.outdir}/${sampleSubdir(sample_id)}/pciseq" }, mode: 'copy'
   conda "${projectDir}/envs/pciseq.yml"
 
   input:
@@ -103,7 +117,10 @@ process PCISEQ_TO_TANGRAM_INPUT {
 
 process RUN_TANGRAM {
   tag { sample_id }
-  publishDir "${params.outdir}/tangram", mode: 'copy'
+  publishDir { "${params.outdir}/${sampleSubdir(sample_id)}/tangram" }, mode: 'copy', saveAs: { filename ->
+    def name = filename.toString()
+    name.endsWith('_tangram_map.h5ad') ? null : filename
+  }
   conda "${projectDir}/envs/pciseq.yml"
 
   input:
@@ -127,7 +144,7 @@ process RUN_TANGRAM {
 
 process TANGRAM_PLOT {
   tag { sample_id }
-  publishDir "${params.outdir}/tangram/post", mode: 'copy'
+  publishDir { "${params.outdir}/${sampleSubdir(sample_id)}/tangram/post" }, mode: 'copy'
   conda "${projectDir}/envs/pciseq.yml"
 
   input:
