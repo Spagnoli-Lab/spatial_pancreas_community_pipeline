@@ -1,0 +1,7 @@
+sample_id,dapi_path,mask_path,seg_path,reads_unmasked_path,reads_masked_path
+E12.5_15,panel2_data/dapi/DAPI_E12.5_15.tif,panel2_data/masks/E12.5_15.tif,panel2_data/cellpose/DAPI_E12.5_15_seg.npy,panel2_data/unmasked_reads/E12.5_15.csv,panel2_data/masked_reads/E12.5_15_masked.csv
+E12.5_8,panel2_data/dapi/DAPI_E12.5_8.tif,panel2_data/masks/E12.5_8.tif,panel2_data/cellpose/DAPI_E12.5_8_seg.npy,panel2_data/unmasked_reads/E12.5_8.csv,panel2_data/masked_reads/E12.5_8_masked.csv
+E12.5_9,panel2_data/dapi/DAPI_E12.5_9.tif,panel2_data/masks/E12.5_9.tif,panel2_data/cellpose/DAPI_E12.5_9_seg.npy,panel2_data/unmasked_reads/E12.5_9.csv,panel2_data/masked_reads/E12.5_9_masked.csv
+E14.5_10,panel2_data/dapi/DAPI_E14.5_10.tif,panel2_data/masks/E14.5_10.tif,panel2_data/cellpose/DAPI_E14.5_10_seg.npy,panel2_data/unmasked_reads/E14.5_10.csv,panel2_data/masked_reads/E14.5_10_masked.csv
+E14.5_2,panel2_data/dapi/DAPI_E14.5_2.tif,panel2_data/masks/E14.5_2.tif,panel2_data/cellpose/DAPI_E14.5_2_seg.npy,panel2_data/unmasked_reads/E14.5_2.csv,panel2_data/masked_reads/E14.5_2_masked.csv
+E14.5_8,panel2_data/dapi/DAPI_E14.5_8.tif,panel2_data/masks/E14.5_8.tif,panel2_data/cellpose/DAPI_E14.5_8_seg.npy,panel2_data/unmasked_reads/E14.5_8.csv,panel2_data/masked_reads/E14.5_8_masked.csv
