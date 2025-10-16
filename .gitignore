@@ -43,6 +43,7 @@ nohup.out
 
 # Large test data (keep repo lean)
 test_data/
+panel2_data/
 
 # Notebooks (ignore large local notebooks)
 SegmentatioNotebook.ipynb
