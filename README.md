@@ -37,6 +37,9 @@ Key outputs are written under `outputs/nf/`:
 - `tangram/post/` – postprocessing plots and cell-type counts.
 - See `docs/workflow_diagram.md` for a Mermaid diagram of the pipeline stages.
 
+### Running on your own data?
+Check your input directory structure at [Before you run](https://github.com/Spagnoli-Lab/spatial_pancreas_community_pipeline/blob/main/README_before_run.md)
+
 ## Output directory structure
 
 Pipeline outputs are organized per-sample (sample id encodes developmental stage and mouse index, e.g. E12.5_15) under outputs/nf/. Each sample directory contains stage-specific results grouped by processing stage:
