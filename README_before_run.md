@@ -41,12 +41,13 @@ Notes:
   - reads_masked_path
 
 Example sample sheet content:
+```pgsql
 sample_id,dapi_path,mask_path,seg_path,reads_unmasked_path,reads_masked_path
 E12.5_9,data/dapi/DAPI_E12.5_9.tif,data/masks/DAPI_E12.5_9_mask.tif,data/cellpose/DAPI_E12.5_9_seg.npy,data/unmasked_reads/E12.5_9.csv,data/masked_reads/E12.5_9_masked.csv
-
+```
 Checklist before running:
 - [ ] All paths listed in the sample sheet exist.
-- [ ]Filenames follow the naming convention above.
-- [ ]No duplicate sample_id entries.
+- [ ] Filenames follow the naming convention above.
+- [ ] No duplicate sample_id entries.
 
 If you need to rename files to match these patterns, use shell commands to preview then rename (do a dry run first).
