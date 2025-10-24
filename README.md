@@ -37,16 +37,42 @@ Key outputs are written under `outputs/nf/`:
 - `tangram/post/` – postprocessing plots and cell-type counts.
 - See `docs/workflow_diagram.md` for a Mermaid diagram of the pipeline stages.
 
-## Directory Structure
+## Output directory structure
+
+Pipeline outputs are organized per-sample (sample id encodes developmental stage and mouse index, e.g. E12.5_15) under outputs/nf/. Each sample directory contains stage-specific results grouped by processing stage:
+
+Example layout
+```
+outputs/nf/
+└── E12.5/
+   └──8/
+   └──9/
+   └──15/
+      ├── cell_filter
+      │   ├── E12.5_15_cell_masks.tif
+      │   └── E12.5_15_processed_mask.npz
+      ├── overlay_qc
+      │   ├── E12.5_15_masked_reads_overlay.png
+      │   └── E12.5_15_masked_reads_summary.txt
+      ├── pciseq
+      │   ├── E12.5_15_masked.csv
+      │   ├── E12.5_15_pciseq_predicted.h5ad
+      │   ├── E12.5_15_pciseq_result.pkl
+      │   └── E12.5_15_processed_mask.npz
+      └── tangram
+         ├── E12.5_15_projected.h5ad
+         ├── E12.5_15_tangram_predicted.h5ad
+         └── post
+            ├── E12.5_15_tangram_celltype_counts.txt
+            ├── E12.5_15_tangram_scatter.png
+            └── E12.5_15_tangram_training_scores.png
 
 ```
-envs/                 # Conda environment specs per process
-scripts/              # Python utilities (filtering, overlays, pciSeq, Tangram, plotting)
-test_data/            # Demo inputs
-samplesheet.csv       # Sample metadata for the test run
-main.nf               # Nextflow workflow definition
-nextflow.config       # Profiles and global settings
-```
+
+Notes:
+- Directories reflect: developmental stage -> mouse index (e.g. E12.5 / 15).
+- Filenames use the sample_id convention (E12.5_15) and include stage-specific suffixes.
+
 
 ## Troubleshooting
 
