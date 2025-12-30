@@ -15,155 +15,12 @@ def sampleSubdir(String sampleId) {
   return sampleId
 }
 
-process FILTER_CELLS_BY_TISSUE {
-  tag { sample_id }
-  publishDir { "${params.outdir}/${sampleSubdir(sample_id)}/cell_filter" }, mode: 'copy'
-  conda "${projectDir}/envs/filter.yml"
-
-  input:
-  tuple val(sample_id), path(mask_dir), path(cellpose_dir), val(masked_reads_path)
-
-  output:
-  tuple val(sample_id),
-        path("${sample_id}_processed_mask.npz"),
-        path("${sample_id}_cell_masks.tif"),
-        val(masked_reads_path)
-
-  script:
-  """
-  python ${projectDir}/scripts/cell_segmentation_filter.py \
-    --sample ${sample_id} \
-    --cellpose_path ${cellpose_dir} \
-    --mask_path ${mask_dir} \
-    --output_dir .
-  """
-}
-
-process OVERLAY_MASKED_READS {
-  tag { sample_id }
-  publishDir { "${params.outdir}/${sampleSubdir(sample_id)}/overlay_qc" }, mode: 'copy'
-  conda "${projectDir}/envs/overlay.yml"
-
-  input:
-  tuple val(sample_id), path(mask_npz), path(mask_viz), path(masked_reads)
-
-  output:
-  path "${sample_id}_masked_reads_overlay.png"
-  path "${sample_id}_masked_reads_summary.txt"
-
-  script:
-  def sampleParts = sample_id.tokenize('_')
-  def overlayStage = sampleParts ? sampleParts[0] : sample_id
-  def overlayIndex = sampleParts.size() > 1 ? sampleParts[-1] : ''
-
-  """
-  python ${projectDir}/scripts/overlay_masked_reads.py \
-    --sample ${sample_id} \
-    --sample_stage ${overlayStage} \
-    --mouse_index ${overlayIndex} \
-    --masked_reads_csv ${masked_reads} \
-    --mask_npz ${mask_npz} \
-    --output_dir .
-  """
-}
-
-process RUN_PCISEQ {
-  tag { sample_id }
-  publishDir { "${params.outdir}/${sampleSubdir(sample_id)}/pciseq" }, mode: 'copy', saveAs: { filename ->
-    def name = filename.toString()
-    name.endsWith('_cell_masks.tif') ? null : filename
-  }
-  conda "${projectDir}/envs/pciseq.yml"
-
-  input:
-  tuple val(sample_id), path(mask_npz), path(mask_viz), path(masked_reads), path(sc_reference)
-
-  output:
-  tuple val(sample_id), path(mask_npz), path(mask_viz), path(masked_reads)
-  tuple val(sample_id), path("${sample_id}_pciseq_result.pkl")
-
-  script:
-  """
-  python ${projectDir}/scripts/run_pciseq_fit.py \\
-    --sample ${sample_id} \\
-    --masked_reads_csv ${masked_reads} \\
-    --mask_array ${mask_npz} \\
-    --sc_h5ad ${sc_reference} \\
-    --cluster_key active.ident \\
-    --collapse_immune \\
-    --output_dir .
-  """
-}
-
-process PCISEQ_TO_TANGRAM_INPUT {
-  tag { sample_id }
-  publishDir { "${params.outdir}/${sampleSubdir(sample_id)}/pciseq" }, mode: 'copy'
-  conda "${projectDir}/envs/pciseq.yml"
-
-  input:
-  tuple val(sample_id), path(pciseq_pickle)
-
-  output:
-  tuple val(sample_id), path("${sample_id}_pciseq_predicted.h5ad")
-
-  script:
-  """
-  python ${projectDir}/scripts/pciseq_to_anndata.py \\
-    --sample ${sample_id} \\
-    --pciseq_result ${pciseq_pickle} \\
-    --output_dir .
-  """
-}
-
-process RUN_TANGRAM {
-  tag { sample_id }
-  publishDir { "${params.outdir}/${sampleSubdir(sample_id)}/tangram" }, mode: 'copy', saveAs: { filename ->
-    def name = filename.toString()
-    name.endsWith('_tangram_map.h5ad') ? null : filename
-  }
-  conda "${projectDir}/envs/pciseq.yml"
-
-  input:
-  tuple val(sample_id), path(pciseq_anndata), path(sc_reference)
-
-  output:
-  tuple val(sample_id),
-        path("${sample_id}_tangram_predicted.h5ad"),
-        path("${sample_id}_projected.h5ad"),
-        path("${sample_id}_tangram_map.h5ad")
-
-  script:
-  """
-  python ${projectDir}/scripts/run_tangram.py \\
-    --sample ${sample_id} \\
-    --sc_reference "${sc_reference}" \\
-    --pciseq_anndata "${pciseq_anndata}" \\
-    --output_dir .
-  """
-}
-
-process TANGRAM_PLOT {
-  tag { sample_id }
-  publishDir { "${params.outdir}/${sampleSubdir(sample_id)}/tangram/post" }, mode: 'copy'
-  conda "${projectDir}/envs/pciseq.yml"
-
-  input:
-  tuple val(sample_id), path(spatial_adata), path(projected_h5ad), path(tangram_map), path(sc_reference)
-
-  output:
-  path "${sample_id}_tangram_training_scores.png"
-  path "${sample_id}_tangram_scatter.png"
-  path "${sample_id}_tangram_celltype_counts.txt"
-
-  script:
-  """
-  python ${projectDir}/scripts/tangram_postprocess.py \\
-    --sample ${sample_id} \\
-    --spatial_adata "${spatial_adata}" \\
-    --tangram_map "${tangram_map}" \\
-    --output_dir .
-  """
-}
+include { CELL_SEGMENTATION_FILTER } from './modules/cell_segmentation_filter.nf'
+include { OVERLAY_MASKED_READS     } from './modules/overlay_masked_reads.nf'
+include { RUN_PCISEQ              } from './modules/run_pciseq.nf'
+include { PCISEQ_TO_TANGRAM_INPUT } from './modules/pciseq_to_tangram_input.nf'
+include { RUN_TANGRAM             } from './modules/run_tangram.nf'
+include { TANGRAM_PLOT            } from './modules/tangram_plot.nf'
 
 workflow {
   def sample_rows = Channel                                             // Holds rows from the samplesheet
@@ -192,48 +49,50 @@ workflow {
   }
   log.info "[workflow] Using scRNA AnnData reference: ${sc_reference}"   // Report which reference is used
 
-  def filtered_masks_ch = sample_rows                                    // Start from normalized sample rows
-    .map { row ->                                                       // Prepare inputs for cell filtering
+  def filter_inputs = sample_rows                                       // Prepare inputs for cell filtering
+    .map { row ->                                                       //
       def mask = file(row.mask_path)                                    // Convert mask path string to a Nextflow file
       def seg  = file(row.seg_path)                                     // Convert segmentation path likewise
-      tuple(                                                            // Emit tuple expected by FILTER_CELLS_BY_TISSUE
+      tuple(                                                            // Emit tuple expected by CELL_SEGMENTATION_FILTER
         row.sample_id as String,
-        mask.parent,
         seg.parent,
-        row.reads_masked_path                                           // Keep masked reads path for downstream overlay
+        mask.parent,
+        file(row.reads_masked_path)                                     // Carry masked reads path for downstream steps
       )
     }
-    | FILTER_CELLS_BY_TISSUE                                            // Run the cell-filtering process
 
-  filtered_masks_ch                                                     // Prepare inputs for pciSeq (and pass-through for overlay)
-    .map { sample_id, mask_npz, mask_viz, masked_reads_path ->
-      tuple(
-        sample_id,
-        mask_npz,
-        mask_viz,
-        file(masked_reads_path),
-        file(params.sc_h5ad)
-      )
+  def filtered_with_reads = filter_inputs                               // Run the cell-filtering module (masked reads passthrough)
+    | CELL_SEGMENTATION_FILTER
+
+  filtered_with_reads                                                   // Generate overlay QC
+    .map { sample_id, mask_npz, mask_viz, masked_reads ->
+      tuple(sample_id, mask_npz, masked_reads)
+    }
+    | OVERLAY_MASKED_READS
+
+  def pciseq_results = filtered_with_reads                              // Run pciSeq fit (single output tuple)
+    .map { sample_id, mask_npz, mask_viz, masked_reads ->
+      tuple(sample_id, mask_npz, mask_viz, masked_reads, sc_reference)
     }
     | RUN_PCISEQ
 
-  RUN_PCISEQ.out[0]                                                     // Pass-through tuple for overlay generation
-    | OVERLAY_MASKED_READS
-
-  RUN_PCISEQ.out[1]                                                     // Convert pciSeq results into AnnData
+  def tangram_input = pciseq_results                                    // Convert pciSeq results into AnnData
+    .map { sample_id, mask_npz, mask_viz, masked_reads, pciseq_pickle ->
+      tuple(sample_id, pciseq_pickle)
+    }
     | PCISEQ_TO_TANGRAM_INPUT
 
-  PCISEQ_TO_TANGRAM_INPUT.out                                           // Run Tangram using single-cell reference
+  def tangram_results = tangram_input                                   // Run Tangram using single-cell reference
     .map { sample_id, pciseq_anndata ->
-      tuple(sample_id, pciseq_anndata, file(params.sc_h5ad))
+      tuple(sample_id, pciseq_anndata, sc_reference)
     }
     | RUN_TANGRAM
 
-RUN_TANGRAM.out                                                       // Create Tangram visualization
-    .map { sample_id, tangram_h5ad, projected_h5ad, tangram_map ->
-      tuple(sample_id, tangram_h5ad, projected_h5ad, tangram_map, file(params.sc_h5ad))
+  TANGRAM_PLOT(                                                         // Create Tangram visualization
+    tangram_results.map { sample_id, tangram_predicted, projected_h5ad, tangram_map ->
+      tuple(sample_id, tangram_predicted, projected_h5ad, tangram_map, sc_reference)
     }
-    | TANGRAM_PLOT
+  )
 
   // Channel.value(1) | PROCESS_SCRNA                                   // Downstream scRNA step (currently disabled)
 }
