@@ -1,0 +1,23 @@
+name: general
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- bioconda::nextflow=25.10.2
+- conda-forge::anndata=0.12.7
+- conda-forge::matplotlib=3.10.8
+- conda-forge::numpy=2.0.0
+- conda-forge::openjdk=17.0.17
+- conda-forge::pandas=2.3.3
+- conda-forge::pillow=12.0.0
+- conda-forge::pip=25.3
+- conda-forge::python=3.12.0
+- conda-forge::scanpy=1.11.5
+- conda-forge::scikit-image=0.26.0
+- conda-forge::scipy=1.16.3
+- conda-forge::seaborn=0.13.2
+- conda-forge::squidpy=1.7.0
+- pip
+- pip:
+  - pciSeq==0.0.61
+  - tangram-sc==1.0.2
